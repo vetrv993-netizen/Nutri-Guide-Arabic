@@ -2,14 +2,17 @@ import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { Tabs } from "expo-router";
 import React from "react";
-import { Platform, StyleSheet, View, useColorScheme } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 import { useColors } from "@/hooks/useColors";
+import { useTheme } from "@/context/ThemeContext";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function TabLayout() {
   const colors = useColors();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const { isDark } = useTheme();
+  const t = useTranslation();
   const isIOS = Platform.OS === "ios";
   const isWeb = Platform.OS === "web";
   const insets = useSafeAreaInsets();
@@ -27,31 +30,31 @@ export default function TabLayout() {
         },
         tabBarStyle: {
           position: "absolute",
-          backgroundColor: isIOS ? "transparent" : colors.background,
+          backgroundColor: isIOS ? "transparent" : colors.card,
           borderTopWidth: 1,
           borderTopColor: colors.border,
           elevation: 0,
-          paddingBottom: isWeb ? 0 : 0,
+          shadowOpacity: 0,
           ...(isWeb ? { height: 84 } : {}),
         },
         tabBarBackground: () =>
           isIOS ? (
             <BlurView
-              intensity={100}
-              tint={isDark ? "dark" : "light"}
+              intensity={95}
+              tint={isDark ? "dark" : "extraLight"}
               style={StyleSheet.absoluteFill}
             />
           ) : isWeb ? (
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.background }]} />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.card }]} />
           ) : null,
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: "الرئيسية",
-          tabBarIcon: ({ color, size }) =>
-            isIOS ? (
+          title: t.tabs.home,
+          tabBarIcon: ({ color, size, focused }) =>
+            focused ? (
               <Ionicons name="home" size={size} color={color} />
             ) : (
               <Feather name="home" size={size} color={color} />
@@ -61,7 +64,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="calculator"
         options={{
-          title: "الحاسبة",
+          title: t.tabs.calculator,
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="calculator" size={size} color={color} />
           ),
@@ -70,7 +73,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="search"
         options={{
-          title: "بحث",
+          title: t.tabs.search,
           tabBarIcon: ({ color, size }) => (
             <Feather name="search" size={size} color={color} />
           ),
@@ -79,9 +82,9 @@ export default function TabLayout() {
       <Tabs.Screen
         name="encyclopedia"
         options={{
-          title: "الموسوعة",
-          tabBarIcon: ({ color, size }) =>
-            isIOS ? (
+          title: t.tabs.encyclopedia,
+          tabBarIcon: ({ color, size, focused }) =>
+            focused ? (
               <Ionicons name="book" size={size} color={color} />
             ) : (
               <Feather name="book-open" size={size} color={color} />
@@ -91,7 +94,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="more"
         options={{
-          title: "المزيد",
+          title: t.tabs.more,
           tabBarIcon: ({ color, size }) => (
             <Feather name="grid" size={size} color={color} />
           ),

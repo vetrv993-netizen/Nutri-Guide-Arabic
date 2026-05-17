@@ -1,8 +1,8 @@
 import colors from "@/constants/colors";
+import { useTheme } from "@/context/ThemeContext";
 
-/**
- * Always returns the light palette for a clean, bright app experience.
- */
 export function useColors() {
-  return { ...colors.light, radius: colors.radius };
+  const { isDark } = useTheme();
+  const palette = isDark ? colors.dark : colors.light;
+  return { ...palette, radius: colors.radius };
 }

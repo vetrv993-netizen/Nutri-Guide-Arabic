@@ -16,8 +16,8 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AppProvider } from "@/context/AppContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 
-// Force RTL for Arabic
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
 
@@ -27,7 +27,7 @@ const queryClient = new QueryClient();
 
 function RootLayoutNav() {
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack screenOptions={{ headerShown: false, animation: "slide_from_left" }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="bmi" options={{ headerShown: false }} />
       <Stack.Screen name="daily-requirements" options={{ headerShown: false }} />
@@ -36,6 +36,7 @@ function RootLayoutNav() {
       <Stack.Screen name="saved-meals" options={{ headerShown: false }} />
       <Stack.Screen name="favorites" options={{ headerShown: false }} />
       <Stack.Screen name="food-detail" options={{ headerShown: false }} />
+      <Stack.Screen name="settings" options={{ headerShown: false }} />
     </Stack>
   );
 }
@@ -62,9 +63,11 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <GestureHandlerRootView style={{ flex: 1 }}>
             <KeyboardProvider>
-              <AppProvider>
-                <RootLayoutNav />
-              </AppProvider>
+              <ThemeProvider>
+                <AppProvider>
+                  <RootLayoutNav />
+                </AppProvider>
+              </ThemeProvider>
             </KeyboardProvider>
           </GestureHandlerRootView>
         </QueryClientProvider>
