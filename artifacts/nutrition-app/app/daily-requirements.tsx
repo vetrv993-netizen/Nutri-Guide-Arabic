@@ -130,7 +130,7 @@ export default function DailyRequirementsScreen() {
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <Text style={[styles.sectionLabel, { color: colors.foreground }]}>مستوى النشاط</Text>
         {ACTIVITY_LEVELS.map(l => (
-          <Pressable key={l.key} onPress={() => setActivityLevel(l.key)} style={[styles.optionRow, { borderColor: activityLevel === l.key ? colors.primary : colors.border, backgroundColor: activityLevel === l.key ? colors.primary + "10" : colors.muted }]}>
+          <Pressable key={l.key} onPress={() => setActivityLevel(l.key as any)} style={[styles.optionRow, { borderColor: activityLevel === l.key ? colors.primary : colors.border, backgroundColor: activityLevel === l.key ? colors.primary + "10" : colors.muted }]}>
             <View style={[styles.radio, { borderColor: activityLevel === l.key ? colors.primary : colors.border }]}>
               {activityLevel === l.key && <View style={[styles.radioDot, { backgroundColor: colors.primary }]} />}
             </View>
@@ -144,7 +144,7 @@ export default function DailyRequirementsScreen() {
         <Text style={[styles.sectionLabel, { color: colors.foreground }]}>هدفك</Text>
         <View style={styles.goalRow}>
           {GOALS.map(g => (
-            <Pressable key={g.key} onPress={() => setGoal(g.key)} style={[styles.goalBtn, { backgroundColor: goal === g.key ? colors.primary : colors.muted, borderColor: goal === g.key ? colors.primary : colors.border }]}>
+            <Pressable key={g.key} onPress={() => setGoal(g.key as any)} style={[styles.goalBtn, { backgroundColor: goal === g.key ? colors.primary : colors.muted, borderColor: goal === g.key ? colors.primary : colors.border }]}>
               <Text style={[styles.goalText, { color: goal === g.key ? "#fff" : colors.foreground }]}>{g.label}</Text>
             </Pressable>
           ))}

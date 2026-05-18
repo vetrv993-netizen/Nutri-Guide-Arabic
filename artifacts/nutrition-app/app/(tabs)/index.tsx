@@ -1,7 +1,6 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React from "react";
 import {
   Platform,
   Pressable,
@@ -10,7 +9,8 @@ import {
   Text,
   View,
 } from "react-native";
-import Animated, { useAnimatedStyle, useSharedValue, withTiming, useEffect as useRAnimatedEffect } from "react-native-reanimated";
+import React, { useEffect } from "react";
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useApp } from "@/context/AppContext";
@@ -34,7 +34,7 @@ function MiniProgressBar({ value, max, color }: { value: number; max: number; co
   const pct = Math.min(value / max, 1);
   const progress = useSharedValue(0);
 
-  useRAnimatedEffect(() => {
+  useEffect(() => {
     progress.value = withTiming(pct, { duration: 900 });
   }, [pct]);
 
