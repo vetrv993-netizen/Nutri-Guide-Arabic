@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DISEASE_GUIDES, DiseaseGuide } from "@/data/diseaseData";
 import { useColors } from "@/hooks/useColors";
+import { useTranslation } from "@/hooks/useTranslation";
 
 function DiseaseCard({ guide, onPress }: { guide: DiseaseGuide; onPress: () => void }) {
   const colors = useColors();
@@ -31,6 +32,7 @@ function DiseaseCard({ guide, onPress }: { guide: DiseaseGuide; onPress: () => v
 
 function DiseaseDetail({ guide, onBack }: { guide: DiseaseGuide; onBack: () => void }) {
   const colors = useColors();
+  const t = useTranslation();
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
@@ -49,11 +51,10 @@ function DiseaseDetail({ guide, onBack }: { guide: DiseaseGuide; onBack: () => v
       </View>
 
       <View style={styles.detailBody}>
-        {/* Recommended foods */}
         <View style={[styles.section, { backgroundColor: "#ECFDF5", borderColor: "#A7F3D0" }]}>
           <View style={styles.sectionHeader}>
             <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-            <Text style={[styles.sectionTitle, { color: "#065F46" }]}>الأطعمة المنصوحة</Text>
+            <Text style={[styles.sectionTitle, { color: "#065F46" }]}>{t.diseaseGuide.recommended}</Text>
           </View>
           {guide.recommendedFoods.map((food, i) => (
             <View key={i} style={styles.listRow}>
@@ -63,11 +64,10 @@ function DiseaseDetail({ guide, onBack }: { guide: DiseaseGuide; onBack: () => v
           ))}
         </View>
 
-        {/* Avoid foods */}
         <View style={[styles.section, { backgroundColor: "#FEF2F2", borderColor: "#FECACA" }]}>
           <View style={styles.sectionHeader}>
             <Ionicons name="close-circle" size={20} color="#EF4444" />
-            <Text style={[styles.sectionTitle, { color: "#7F1D1D" }]}>الأطعمة المحظورة</Text>
+            <Text style={[styles.sectionTitle, { color: "#7F1D1D" }]}>{t.diseaseGuide.avoid}</Text>
           </View>
           {guide.avoidFoods.map((food, i) => (
             <View key={i} style={styles.listRow}>
@@ -77,11 +77,10 @@ function DiseaseDetail({ guide, onBack }: { guide: DiseaseGuide; onBack: () => v
           ))}
         </View>
 
-        {/* Nutrition tips */}
         <View style={[styles.section, { backgroundColor: "#EFF6FF", borderColor: "#BFDBFE" }]}>
           <View style={styles.sectionHeader}>
             <Ionicons name="bulb-outline" size={20} color="#3B82F6" />
-            <Text style={[styles.sectionTitle, { color: "#1E3A8A" }]}>نصائح غذائية</Text>
+            <Text style={[styles.sectionTitle, { color: "#1E3A8A" }]}>{t.diseaseGuide.tips}</Text>
           </View>
           {guide.nutritionTips.map((tip, i) => (
             <View key={i} style={styles.listRow}>
@@ -91,11 +90,10 @@ function DiseaseDetail({ guide, onBack }: { guide: DiseaseGuide; onBack: () => v
           ))}
         </View>
 
-        {/* Daily limits */}
         <View style={[styles.section, { backgroundColor: "#FFF7ED", borderColor: "#FED7AA" }]}>
           <View style={styles.sectionHeader}>
             <Ionicons name="stats-chart-outline" size={20} color="#F59E0B" />
-            <Text style={[styles.sectionTitle, { color: "#78350F" }]}>الحدود اليومية</Text>
+            <Text style={[styles.sectionTitle, { color: "#78350F" }]}>{t.diseaseGuide.dailyLimits}</Text>
           </View>
           {guide.dailyLimits.map((limit, i) => (
             <View key={i} style={[styles.limitRow, { backgroundColor: "#FFFBEB" }]}>
@@ -108,11 +106,10 @@ function DiseaseDetail({ guide, onBack }: { guide: DiseaseGuide; onBack: () => v
           ))}
         </View>
 
-        {/* Warnings */}
         <View style={[styles.section, { backgroundColor: "#FEF3C7", borderColor: "#FCD34D" }]}>
           <View style={styles.sectionHeader}>
             <Ionicons name="warning" size={20} color="#D97706" />
-            <Text style={[styles.sectionTitle, { color: "#78350F" }]}>تحذيرات مهمة</Text>
+            <Text style={[styles.sectionTitle, { color: "#78350F" }]}>{t.diseaseGuide.warnings}</Text>
           </View>
           {guide.warnings.map((warning, i) => (
             <View key={i} style={styles.listRow}>
@@ -124,9 +121,7 @@ function DiseaseDetail({ guide, onBack }: { guide: DiseaseGuide; onBack: () => v
 
         <View style={[styles.disclaimerCard, { backgroundColor: "#F3F4F6", borderColor: "#D1D5DB" }]}>
           <Ionicons name="information-circle-outline" size={18} color="#6B7280" />
-          <Text style={[styles.disclaimerText, { color: "#6B7280" }]}>
-            هذه المعلومات للأغراض التعليمية فقط ولا تغني عن استشارة الطبيب المختص. كل حالة مرضية فريدة وتحتاج خطة علاجية مخصصة.
-          </Text>
+          <Text style={[styles.disclaimerText, { color: "#6B7280" }]}>{t.diseaseGuide.disclaimer}</Text>
         </View>
       </View>
     </ScrollView>
@@ -135,6 +130,7 @@ function DiseaseDetail({ guide, onBack }: { guide: DiseaseGuide; onBack: () => v
 
 export default function DiseaseNutritionScreen() {
   const colors = useColors();
+  const t = useTranslation();
   const insets = useSafeAreaInsets();
   const [selectedGuide, setSelectedGuide] = useState<DiseaseGuide | null>(null);
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
@@ -158,16 +154,14 @@ export default function DiseaseNutritionScreen() {
           <Ionicons name="chevron-forward" size={20} color={colors.foreground} />
         </Pressable>
         <View>
-          <Text style={[styles.title, { color: colors.foreground }]}>التغذية الطبية</Text>
-          <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>دليل غذائي لكل مرض</Text>
+          <Text style={[styles.title, { color: colors.foreground }]}>{t.diseaseGuide.title}</Text>
+          <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>{t.diseaseGuide.subtitle}</Text>
         </View>
       </View>
 
       <View style={[styles.alertCard, { backgroundColor: "#FEF3C7", borderColor: "#F59E0B" }]}>
         <Ionicons name="warning-outline" size={18} color="#D97706" />
-        <Text style={[styles.alertText, { color: "#92400E" }]}>
-          هذه المعلومات للتوعية فقط. استشر طبيبك دائماً قبل تغيير نظامك الغذائي.
-        </Text>
+        <Text style={[styles.alertText, { color: "#92400E" }]}>{t.diseaseGuide.alert}</Text>
       </View>
 
       <View style={styles.list}>

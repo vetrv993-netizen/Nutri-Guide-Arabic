@@ -13,30 +13,32 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { useTranslation } from "@/hooks/useTranslation";
 
-type BMICategory = { label: string; color: string; min: number; max: number; description: string };
-const BMI_CATEGORIES: BMICategory[] = [
-  { label: "نحافة شديدة", color: "#3B82F6", min: 0, max: 16, description: "وزنك أقل من الطبيعي بشكل ملحوظ. يجب استشارة الطبيب." },
-  { label: "نحافة", color: "#60A5FA", min: 16, max: 18.5, description: "وزنك أقل من المعدل الطبيعي. زيادة الطعام الصحي مطلوبة." },
-  { label: "وزن طبيعي", color: "#22C55E", min: 18.5, max: 25, description: "وزنك في النطاق الصحي. حافظ على نمط حياتك الحالي." },
-  { label: "زيادة وزن", color: "#F59E0B", min: 25, max: 30, description: "وزنك أعلى قليلاً من الطبيعي. تحسين النظام الغذائي مفيد." },
-  { label: "سمنة درجة أولى", color: "#F97316", min: 30, max: 35, description: "سمنة معتدلة. ننصح بمراجعة أخصائي تغذية." },
-  { label: "سمنة درجة ثانية", color: "#EF4444", min: 35, max: 40, description: "سمنة مرتفعة. مراجعة الطبيب ضرورية." },
-  { label: "سمنة مرضية", color: "#DC2626", min: 40, max: 999, description: "سمنة خطرة. مراجعة الطبيب عاجلة ضرورية." },
+const BMI_RANGES = [
+  { color: "#3B82F6", min: 0, max: 16 },
+  { color: "#60A5FA", min: 16, max: 18.5 },
+  { color: "#22C55E", min: 18.5, max: 25 },
+  { color: "#F59E0B", min: 25, max: 30 },
+  { color: "#F97316", min: 30, max: 35 },
+  { color: "#EF4444", min: 35, max: 40 },
+  { color: "#DC2626", min: 40, max: 999 },
 ];
-
-function getBMICategory(bmi: number): BMICategory {
-  return BMI_CATEGORIES.find(c => bmi >= c.min && bmi < c.max) || BMI_CATEGORIES[2];
-}
 
 export default function BMIScreen() {
   const colors = useColors();
+  const t = useTranslation();
   const insets = useSafeAreaInsets();
   const [weight, setWeight] = useState("");
   const [height, setHeight] = useState("");
   const [age, setAge] = useState("");
   const [gender, setGender] = useState<"male" | "female">("male");
-  const [result, setResult] = useState<{ bmi: number; category: BMICategory; idealMin: number; idealMax: number } | null>(null);
+  const [result, setResult] = useState<{
+    bmi: number;
+    categoryIndex: number;
+    idealMin: number;
+    idealMax: number;
+  } | null>(null);
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
 
   const calculate = () => {
@@ -46,7 +48,8 @@ export default function BMIScreen() {
     const bmi = w / (h * h);
     const idealMin = Math.round(18.5 * h * h * 10) / 10;
     const idealMax = Math.round(24.9 * h * h * 10) / 10;
-    setResult({ bmi: Math.round(bmi * 10) / 10, category: getBMICategory(bmi), idealMin, idealMax });
+    const idx = BMI_RANGES.findIndex(r => bmi >= r.min && bmi < r.max);
+    setResult({ bmi: Math.round(bmi * 10) / 10, categoryIndex: idx >= 0 ? idx : 2, idealMin, idealMax });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   };
 
@@ -55,21 +58,22 @@ export default function BMIScreen() {
     return (
       <View style={styles.scale}>
         <View style={styles.scaleBar}>
-          {["#3B82F6", "#60A5FA", "#22C55E", "#F59E0B", "#F97316", "#EF4444", "#DC2626"].map((c, i) => (
-            <View key={i} style={[styles.scaleSegment, { backgroundColor: c }]} />
+          {BMI_RANGES.map((r, i) => (
+            <View key={i} style={[styles.scaleSegment, { backgroundColor: r.color }]} />
           ))}
           <View style={[styles.scaleIndicator, { left: `${pct}%` as any }]} />
         </View>
         <View style={styles.scaleLabels}>
-          <Text style={[styles.scaleLabel, { color: colors.mutedForeground }]}>16</Text>
-          <Text style={[styles.scaleLabel, { color: colors.mutedForeground }]}>18.5</Text>
-          <Text style={[styles.scaleLabel, { color: colors.mutedForeground }]}>25</Text>
-          <Text style={[styles.scaleLabel, { color: colors.mutedForeground }]}>30</Text>
-          <Text style={[styles.scaleLabel, { color: colors.mutedForeground }]}>40+</Text>
+          {["16", "18.5", "25", "30", "40+"].map(l => (
+            <Text key={l} style={[styles.scaleLabel, { color: colors.mutedForeground }]}>{l}</Text>
+          ))}
         </View>
       </View>
     );
   };
+
+  const cat = result ? t.bmi.categories[result.categoryIndex] : null;
+  const catColor = result ? BMI_RANGES[result.categoryIndex].color : "#22C55E";
 
   return (
     <ScrollView
@@ -81,43 +85,43 @@ export default function BMIScreen() {
         <Pressable onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: colors.muted }]}>
           <Ionicons name="chevron-forward" size={20} color={colors.foreground} />
         </Pressable>
-        <Text style={[styles.title, { color: colors.foreground }]}>حاسبة مؤشر كتلة الجسم</Text>
+        <Text style={[styles.title, { color: colors.foreground }]}>{t.bmi.title}</Text>
       </View>
 
       {/* Gender */}
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <Text style={[styles.label, { color: colors.foreground }]}>الجنس</Text>
+        <Text style={[styles.label, { color: colors.foreground }]}>{t.bmi.gender}</Text>
         <View style={styles.genderRow}>
           <Pressable onPress={() => setGender("female")} style={[styles.genderBtn, { backgroundColor: gender === "female" ? "#EC4899" : colors.muted, flex: 1 }]}>
             <Ionicons name="woman" size={20} color={gender === "female" ? "#fff" : colors.mutedForeground} />
-            <Text style={[styles.genderText, { color: gender === "female" ? "#fff" : colors.foreground }]}>أنثى</Text>
+            <Text style={[styles.genderText, { color: gender === "female" ? "#fff" : colors.foreground }]}>{t.common.female}</Text>
           </Pressable>
           <Pressable onPress={() => setGender("male")} style={[styles.genderBtn, { backgroundColor: gender === "male" ? "#3B82F6" : colors.muted, flex: 1 }]}>
             <Ionicons name="man" size={20} color={gender === "male" ? "#fff" : colors.mutedForeground} />
-            <Text style={[styles.genderText, { color: gender === "male" ? "#fff" : colors.foreground }]}>ذكر</Text>
+            <Text style={[styles.genderText, { color: gender === "male" ? "#fff" : colors.foreground }]}>{t.common.male}</Text>
           </Pressable>
         </View>
       </View>
 
       {/* Inputs */}
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, gap: 16 }]}>
-        <InputField label="الوزن (كيلوغرام)" value={weight} onChangeText={setWeight} placeholder="مثال: 70" unit="كغ" colors={colors} />
-        <InputField label="الطول (سنتيمتر)" value={height} onChangeText={setHeight} placeholder="مثال: 170" unit="سم" colors={colors} />
-        <InputField label="العمر (اختياري)" value={age} onChangeText={setAge} placeholder="مثال: 30" unit="سنة" colors={colors} />
+        <InputField label={t.bmi.weight} value={weight} onChangeText={setWeight} placeholder={t.bmi.weightPlaceholder} unit={t.bmi.weightUnit} colors={colors} />
+        <InputField label={t.bmi.height} value={height} onChangeText={setHeight} placeholder={t.bmi.heightPlaceholder} unit={t.bmi.heightUnit} colors={colors} />
+        <InputField label={t.bmi.age} value={age} onChangeText={setAge} placeholder={t.bmi.agePlaceholder} unit={t.bmi.ageUnit} colors={colors} />
       </View>
 
       <Pressable onPress={calculate} style={[styles.calcBtn, { backgroundColor: colors.primary }]}>
         <Ionicons name="calculator" size={20} color="#fff" />
-        <Text style={[styles.calcBtnText, { color: "#fff" }]}>احسب المؤشر</Text>
+        <Text style={[styles.calcBtnText, { color: "#fff" }]}>{t.bmi.calculate}</Text>
       </Pressable>
 
-      {result && (
+      {result && cat && (
         <View style={styles.results}>
-          <View style={[styles.resultCard, { backgroundColor: result.category.color + "15", borderColor: result.category.color }]}>
-            <Text style={[styles.bmiValue, { color: result.category.color }]}>{result.bmi}</Text>
-            <Text style={[styles.bmiLabel, { color: colors.foreground }]}>مؤشر كتلة الجسم</Text>
-            <View style={[styles.categoryBadge, { backgroundColor: result.category.color }]}>
-              <Text style={styles.categoryText}>{result.category.label}</Text>
+          <View style={[styles.resultCard, { backgroundColor: catColor + "15", borderColor: catColor }]}>
+            <Text style={[styles.bmiValue, { color: catColor }]}>{result.bmi}</Text>
+            <Text style={[styles.bmiLabel, { color: colors.foreground }]}>{t.bmi.bmiIndex}</Text>
+            <View style={[styles.categoryBadge, { backgroundColor: catColor }]}>
+              <Text style={styles.categoryText}>{cat.label}</Text>
             </View>
           </View>
 
@@ -125,24 +129,23 @@ export default function BMIScreen() {
 
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
-            <Text style={[styles.descText, { color: colors.foreground }]}>{result.category.description}</Text>
+            <Text style={[styles.descText, { color: colors.foreground }]}>{cat.description}</Text>
           </View>
 
           <View style={[styles.idealCard, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
-            <Text style={[styles.idealTitle, { color: colors.foreground }]}>الوزن المثالي لطولك</Text>
-            <Text style={[styles.idealRange, { color: colors.primary }]}>{result.idealMin} - {result.idealMax} كيلوغرام</Text>
-            <Text style={[styles.idealNote, { color: colors.mutedForeground }]}>بناءً على مؤشر BMI 18.5 - 24.9</Text>
+            <Text style={[styles.idealTitle, { color: colors.foreground }]}>{t.bmi.idealWeight}</Text>
+            <Text style={[styles.idealRange, { color: colors.primary }]}>{result.idealMin} - {result.idealMax} {t.bmi.kg}</Text>
+            <Text style={[styles.idealNote, { color: colors.mutedForeground }]}>{t.bmi.basedOn}</Text>
           </View>
 
-          {/* BMI Categories Reference */}
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, gap: 8 }]}>
-            <Text style={[styles.label, { color: colors.foreground }]}>مرجع مؤشر كتلة الجسم</Text>
-            {BMI_CATEGORIES.map(cat => (
-              <View key={cat.label} style={styles.catRow}>
-                <View style={[styles.catDot, { backgroundColor: cat.color }]} />
-                <Text style={[styles.catLabel, { color: colors.foreground }]}>{cat.label}</Text>
+            <Text style={[styles.label, { color: colors.foreground }]}>{t.bmi.bmiRef}</Text>
+            {BMI_RANGES.map((r, i) => (
+              <View key={i} style={styles.catRow}>
+                <View style={[styles.catDot, { backgroundColor: r.color }]} />
+                <Text style={[styles.catLabel, { color: colors.foreground }]}>{t.bmi.categories[i].label}</Text>
                 <Text style={[styles.catRange, { color: colors.mutedForeground }]}>
-                  {cat.max === 999 ? `${cat.min}+` : `${cat.min} - ${cat.max}`}
+                  {r.max === 999 ? `${r.min}+` : `${r.min} - ${r.max}`}
                 </Text>
               </View>
             ))}
@@ -150,9 +153,7 @@ export default function BMIScreen() {
 
           <View style={[styles.warningCard, { backgroundColor: "#FEF3C7", borderColor: "#F59E0B" }]}>
             <Ionicons name="warning-outline" size={18} color="#D97706" />
-            <Text style={[styles.warningText, { color: "#92400E" }]}>
-              مؤشر BMI مجرد أداة تقديرية. لا يأخذ في الاعتبار كتلة العضلات والعظام. استشر طبيبك للتقييم الشامل.
-            </Text>
+            <Text style={[styles.warningText, { color: "#92400E" }]}>{t.bmi.bmiNote}</Text>
           </View>
         </View>
       )}
@@ -163,11 +164,11 @@ export default function BMIScreen() {
 function InputField({ label, value, onChangeText, placeholder, unit, colors }: any) {
   return (
     <View style={{ gap: 6 }}>
-      <Text style={[{ fontSize: 14, fontFamily: "Inter_500Medium", textAlign: "right", color: colors.foreground }]}>{label}</Text>
-      <View style={[{ flexDirection: "row-reverse", alignItems: "center", backgroundColor: colors.muted, borderRadius: 10, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 14 }]}>
-        <Text style={[{ fontSize: 14, fontFamily: "Inter_400Regular", color: colors.mutedForeground, marginLeft: 4 }]}>{unit}</Text>
+      <Text style={{ fontSize: 14, fontFamily: "Inter_500Medium", textAlign: "right", color: colors.foreground }}>{label}</Text>
+      <View style={{ flexDirection: "row-reverse", alignItems: "center", backgroundColor: colors.muted, borderRadius: 10, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 14 }}>
+        <Text style={{ fontSize: 14, fontFamily: "Inter_400Regular", color: colors.mutedForeground, marginLeft: 4 }}>{unit}</Text>
         <TextInput
-          style={[{ flex: 1, paddingVertical: 12, fontSize: 16, fontFamily: "Inter_500Medium", textAlign: "right", color: colors.foreground }]}
+          style={{ flex: 1, paddingVertical: 12, fontSize: 16, fontFamily: "Inter_500Medium", textAlign: "right", color: colors.foreground }}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}

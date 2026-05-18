@@ -14,19 +14,21 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SavedMeal, useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function SavedMealsScreen() {
   const colors = useColors();
+  const t = useTranslation();
   const insets = useSafeAreaInsets();
   const { savedMeals, deleteMeal } = useApp();
   const [expanded, setExpanded] = useState<string | null>(null);
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
 
   const handleDelete = (meal: SavedMeal) => {
-    Alert.alert("حذف الوجبة", `هل تريد حذف "${meal.name}"؟`, [
-      { text: "إلغاء", style: "cancel" },
+    Alert.alert(t.savedMeals.deleteTitle, `${t.savedMeals.deleteConfirm} "${meal.name}"؟`, [
+      { text: t.savedMeals.deleteCancel, style: "cancel" },
       {
-        text: "حذف", style: "destructive", onPress: async () => {
+        text: t.savedMeals.deleteBtn, style: "destructive", onPress: async () => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
           await deleteMeal(meal.id);
         }
@@ -40,7 +42,7 @@ export default function SavedMealsScreen() {
         <Pressable onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: colors.muted }]}>
           <Ionicons name="chevron-forward" size={20} color={colors.foreground} />
         </Pressable>
-        <Text style={[styles.title, { color: colors.foreground }]}>الوجبات المحفوظة</Text>
+        <Text style={[styles.title, { color: colors.foreground }]}>{t.savedMeals.title}</Text>
       </View>
 
       <FlatList
@@ -50,10 +52,10 @@ export default function SavedMealsScreen() {
         ListEmptyComponent={
           <View style={styles.empty}>
             <Ionicons name="bookmark-outline" size={64} color={colors.mutedForeground} />
-            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>لا توجد وجبات محفوظة</Text>
-            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>أضف وجبات من حاسبة التغذية وادخرها هنا</Text>
+            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>{t.savedMeals.empty}</Text>
+            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>{t.savedMeals.emptyText}</Text>
             <Pressable onPress={() => router.push("/calculator" as any)} style={[styles.emptyBtn, { backgroundColor: colors.primary }]}>
-              <Text style={[styles.emptyBtnText, { color: "#fff" }]}>الذهاب للحاسبة</Text>
+              <Text style={[styles.emptyBtnText, { color: "#fff" }]}>{t.savedMeals.goToCalc}</Text>
             </Pressable>
           </View>
         }
@@ -63,39 +65,36 @@ export default function SavedMealsScreen() {
               <Ionicons name={expanded === item.id ? "chevron-up" : "chevron-down"} size={16} color={colors.mutedForeground} />
               <View style={styles.mealMeta}>
                 <Text style={[styles.mealName, { color: colors.foreground }]}>{item.name}</Text>
-                <Text style={[styles.mealDate, { color: colors.mutedForeground }]}>{item.date} · {item.items.length} عنصر</Text>
+                <Text style={[styles.mealDate, { color: colors.mutedForeground }]}>{item.date} · {item.items.length} {t.savedMeals.item}</Text>
               </View>
               <View style={[styles.calBadge, { backgroundColor: colors.primary + "20" }]}>
                 <Text style={[styles.calBadgeText, { color: colors.primary }]}>{item.totalCalories}</Text>
-                <Text style={[styles.calBadgeUnit, { color: colors.mutedForeground }]}>كالوري</Text>
+                <Text style={[styles.calBadgeUnit, { color: colors.mutedForeground }]}>{t.savedMeals.kcal}</Text>
               </View>
             </Pressable>
 
-            {/* Macros */}
             <View style={styles.macroRow}>
-              <MacroBadge label="ب" value={item.totalProtein} unit="غ" color="#3B82F6" />
-              <MacroBadge label="ك" value={item.totalCarbs} unit="غ" color="#F59E0B" />
-              <MacroBadge label="د" value={item.totalFat} unit="غ" color="#8B5CF6" />
+              <MacroBadge label={`${t.savedMeals.protein}: ${item.totalProtein}${t.savedMeals.g}`} color="#3B82F6" />
+              <MacroBadge label={`${t.savedMeals.carbs}: ${item.totalCarbs}${t.savedMeals.g}`} color="#F59E0B" />
+              <MacroBadge label={`${t.savedMeals.fat}: ${item.totalFat}${t.savedMeals.g}`} color="#8B5CF6" />
             </View>
 
-            {/* Items list (expanded) */}
             {expanded === item.id && (
               <View style={[styles.expandedItems, { borderTopColor: colors.border }]}>
                 {item.items.map((ci, idx) => (
                   <View key={idx} style={styles.foodItemRow}>
-                    <Text style={[styles.foodItemCal, { color: colors.primary }]}>{((ci.food.calories * ci.grams) / 100).toFixed(0)} كالوري</Text>
-                    <Text style={[styles.foodItemGrams, { color: colors.mutedForeground }]}>{ci.grams}غ</Text>
+                    <Text style={[styles.foodItemCal, { color: colors.primary }]}>{((ci.food.calories * ci.grams) / 100).toFixed(0)} {t.savedMeals.kcal}</Text>
+                    <Text style={[styles.foodItemGrams, { color: colors.mutedForeground }]}>{ci.grams}{t.savedMeals.g}</Text>
                     <Text style={[styles.foodItemName, { color: colors.foreground }]}>{ci.food.arabic_name}</Text>
                   </View>
                 ))}
               </View>
             )}
 
-            {/* Actions */}
             <View style={[styles.mealActions, { borderTopColor: colors.border }]}>
               <Pressable onPress={() => handleDelete(item)} style={[styles.actionBtn, { backgroundColor: colors.destructive + "15" }]}>
                 <Ionicons name="trash-outline" size={16} color={colors.destructive} />
-                <Text style={[styles.actionText, { color: colors.destructive }]}>حذف</Text>
+                <Text style={[styles.actionText, { color: colors.destructive }]}>{t.savedMeals.deleteBtn}</Text>
               </Pressable>
             </View>
           </View>
@@ -105,11 +104,11 @@ export default function SavedMealsScreen() {
   );
 }
 
-function MacroBadge({ label, value, unit, color }: { label: string; value: number; unit: string; color: string }) {
+function MacroBadge({ label, color }: { label: string; color: string }) {
   const colors = useColors();
   return (
     <View style={[styles.macroBadge, { backgroundColor: color + "15" }]}>
-      <Text style={[styles.macroBadgeText, { color }]}>{label}: {value}{unit}</Text>
+      <Text style={[styles.macroBadgeText, { color }]}>{label}</Text>
     </View>
   );
 }

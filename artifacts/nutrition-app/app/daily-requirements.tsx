@@ -15,22 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NutritionBar } from "@/components/NutritionBar";
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
-
-type ActivityLevel = { key: string; label: string; multiplier: number };
-const ACTIVITY_LEVELS: ActivityLevel[] = [
-  { key: "sedentary", label: "راحة تامة", multiplier: 1.2 },
-  { key: "light", label: "نشاط خفيف (1-3 أيام/أسبوع)", multiplier: 1.375 },
-  { key: "moderate", label: "نشاط معتدل (3-5 أيام/أسبوع)", multiplier: 1.55 },
-  { key: "active", label: "نشاط مرتفع (6-7 أيام/أسبوع)", multiplier: 1.725 },
-  { key: "veryActive", label: "نشاط شديد جداً", multiplier: 1.9 },
-];
-
-type Goal = { key: string; label: string; adjust: number };
-const GOALS: Goal[] = [
-  { key: "lose", label: "إنقاص الوزن", adjust: -500 },
-  { key: "maintain", label: "الحفاظ على الوزن", adjust: 0 },
-  { key: "gain", label: "زيادة الوزن", adjust: 500 },
-];
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface DailyNeeds {
   calories: number;
@@ -44,7 +29,6 @@ interface DailyNeeds {
 }
 
 function calculateNeeds(age: number, weight: number, height: number, gender: string, activityMultiplier: number, goalAdjust: number): DailyNeeds {
-  // Mifflin-St Jeor
   let bmr: number;
   if (gender === "male") {
     bmr = 10 * weight + 6.25 * height - 5 * age + 5;
@@ -53,16 +37,31 @@ function calculateNeeds(age: number, weight: number, height: number, gender: str
   }
   const tdee = bmr * activityMultiplier;
   const calories = Math.round(tdee + goalAdjust);
-  const protein = Math.round(weight * 1.6); // 1.6g/kg moderate
-  const fat = Math.round((calories * 0.25) / 9); // 25% from fat
+  const protein = Math.round(weight * 1.6);
+  const fat = Math.round((calories * 0.25) / 9);
   const carbs = Math.round((calories - protein * 4 - fat * 9) / 4);
-  const water = Math.round(weight * 33); // 33ml/kg
+  const water = Math.round(weight * 33);
   const fiber = gender === "male" ? 38 : 25;
   return { calories, protein, carbs, fat, water, fiber, bmr: Math.round(bmr), tdee: Math.round(tdee) };
 }
 
+const ACTIVITY_MULTIPLIERS: Record<string, number> = {
+  sedentary: 1.2,
+  light: 1.375,
+  moderate: 1.55,
+  active: 1.725,
+  veryActive: 1.9,
+};
+
+const GOAL_ADJUSTMENTS: Record<string, number> = {
+  lose: -500,
+  maintain: 0,
+  gain: 500,
+};
+
 export default function DailyRequirementsScreen() {
   const colors = useColors();
+  const t = useTranslation();
   const insets = useSafeAreaInsets();
   const { saveUserProfile, userProfile } = useApp();
   const [age, setAge] = useState(userProfile?.age?.toString() || "");
@@ -74,18 +73,35 @@ export default function DailyRequirementsScreen() {
   const [result, setResult] = useState<DailyNeeds | null>(null);
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
 
+  const activityKeys = Object.keys(ACTIVITY_MULTIPLIERS);
+  const goalKeys = Object.keys(GOAL_ADJUSTMENTS);
+
+  const getActivityLabel = (key: string) => {
+    const k = key as keyof typeof t.dailyReq.activityLevels;
+    return t.dailyReq.activityLevels[k] ?? key;
+  };
+
+  const getGoalLabel = (key: string) => {
+    const k = key as keyof typeof t.dailyReq.goals;
+    return t.dailyReq.goals[k] ?? key;
+  };
+
   const calculate = async () => {
     const a = parseInt(age);
     const w = parseFloat(weight);
     const h = parseFloat(height);
     if (!a || !w || !h) return;
-    const activity = ACTIVITY_LEVELS.find(l => l.key === activityLevel)!;
-    const goalData = GOALS.find(g => g.key === goal)!;
-    const needs = calculateNeeds(a, w, h, gender, activity.multiplier, goalData.adjust);
+    const multiplier = ACTIVITY_MULTIPLIERS[activityLevel] ?? 1.55;
+    const adjust = GOAL_ADJUSTMENTS[goal] ?? 0;
+    const needs = calculateNeeds(a, w, h, gender, multiplier, adjust);
     setResult(needs);
     await saveUserProfile({ age: a, weight: w, height: h, gender, activityLevel: activityLevel as any, goal: goal as any });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   };
+
+  const waterCups = result
+    ? t.dailyReq.waterCups.replace("{n}", String(Math.round(result.water / 250)))
+    : "";
 
   return (
     <ScrollView
@@ -97,55 +113,52 @@ export default function DailyRequirementsScreen() {
         <Pressable onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: colors.muted }]}>
           <Ionicons name="chevron-forward" size={20} color={colors.foreground} />
         </Pressable>
-        <Text style={[styles.title, { color: colors.foreground }]}>الاحتياجات اليومية</Text>
+        <Text style={[styles.title, { color: colors.foreground }]}>{t.dailyReq.title}</Text>
       </View>
 
-      {/* Info */}
       <View style={[styles.infoCard, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
         <Ionicons name="information-circle-outline" size={16} color={colors.primary} />
-        <Text style={[styles.infoText, { color: colors.mutedForeground }]}>
-          يستخدم هذا الحاسب معادلة ميفلين-سانت جيور العلمية
-        </Text>
+        <Text style={[styles.infoText, { color: colors.mutedForeground }]}>{t.dailyReq.formula}</Text>
       </View>
 
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <Text style={[styles.sectionLabel, { color: colors.foreground }]}>الجنس</Text>
+        <Text style={[styles.sectionLabel, { color: colors.foreground }]}>{t.dailyReq.gender}</Text>
         <View style={styles.genderRow}>
           {(["female", "male"] as const).map(g => (
             <Pressable key={g} onPress={() => setGender(g)} style={[styles.genderBtn, { backgroundColor: gender === g ? colors.primary : colors.muted, flex: 1 }]}>
               <Ionicons name={g === "male" ? "man" : "woman"} size={18} color={gender === g ? "#fff" : colors.mutedForeground} />
-              <Text style={[styles.genderText, { color: gender === g ? "#fff" : colors.foreground }]}>{g === "male" ? "ذكر" : "أنثى"}</Text>
+              <Text style={[styles.genderText, { color: gender === g ? "#fff" : colors.foreground }]}>
+                {g === "male" ? t.common.male : t.common.female}
+              </Text>
             </Pressable>
           ))}
         </View>
 
         <View style={styles.inputsGrid}>
-          <InputF label="العمر" value={age} onChange={setAge} unit="سنة" colors={colors} />
-          <InputF label="الوزن" value={weight} onChange={setWeight} unit="كغ" colors={colors} />
-          <InputF label="الطول" value={height} onChange={setHeight} unit="سم" colors={colors} />
+          <InputF label={t.dailyReq.age} value={age} onChange={setAge} unit={t.dailyReq.ageUnit} colors={colors} />
+          <InputF label={t.dailyReq.weight} value={weight} onChange={setWeight} unit={t.dailyReq.weightUnit} colors={colors} />
+          <InputF label={t.dailyReq.height} value={height} onChange={setHeight} unit={t.dailyReq.heightUnit} colors={colors} />
         </View>
       </View>
 
-      {/* Activity level */}
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <Text style={[styles.sectionLabel, { color: colors.foreground }]}>مستوى النشاط</Text>
-        {ACTIVITY_LEVELS.map(l => (
-          <Pressable key={l.key} onPress={() => setActivityLevel(l.key as any)} style={[styles.optionRow, { borderColor: activityLevel === l.key ? colors.primary : colors.border, backgroundColor: activityLevel === l.key ? colors.primary + "10" : colors.muted }]}>
-            <View style={[styles.radio, { borderColor: activityLevel === l.key ? colors.primary : colors.border }]}>
-              {activityLevel === l.key && <View style={[styles.radioDot, { backgroundColor: colors.primary }]} />}
+        <Text style={[styles.sectionLabel, { color: colors.foreground }]}>{t.dailyReq.activityLevel}</Text>
+        {activityKeys.map(key => (
+          <Pressable key={key} onPress={() => setActivityLevel(key)} style={[styles.optionRow, { borderColor: activityLevel === key ? colors.primary : colors.border, backgroundColor: activityLevel === key ? colors.primary + "10" : colors.muted }]}>
+            <View style={[styles.radio, { borderColor: activityLevel === key ? colors.primary : colors.border }]}>
+              {activityLevel === key && <View style={[styles.radioDot, { backgroundColor: colors.primary }]} />}
             </View>
-            <Text style={[styles.optionText, { color: colors.foreground }]}>{l.label}</Text>
+            <Text style={[styles.optionText, { color: colors.foreground }]}>{getActivityLabel(key)}</Text>
           </Pressable>
         ))}
       </View>
 
-      {/* Goal */}
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <Text style={[styles.sectionLabel, { color: colors.foreground }]}>هدفك</Text>
+        <Text style={[styles.sectionLabel, { color: colors.foreground }]}>{t.dailyReq.goal}</Text>
         <View style={styles.goalRow}>
-          {GOALS.map(g => (
-            <Pressable key={g.key} onPress={() => setGoal(g.key as any)} style={[styles.goalBtn, { backgroundColor: goal === g.key ? colors.primary : colors.muted, borderColor: goal === g.key ? colors.primary : colors.border }]}>
-              <Text style={[styles.goalText, { color: goal === g.key ? "#fff" : colors.foreground }]}>{g.label}</Text>
+          {goalKeys.map(key => (
+            <Pressable key={key} onPress={() => setGoal(key)} style={[styles.goalBtn, { backgroundColor: goal === key ? colors.primary : colors.muted, borderColor: goal === key ? colors.primary : colors.border }]}>
+              <Text style={[styles.goalText, { color: goal === key ? "#fff" : colors.foreground }]}>{getGoalLabel(key)}</Text>
             </Pressable>
           ))}
         </View>
@@ -153,53 +166,48 @@ export default function DailyRequirementsScreen() {
 
       <Pressable onPress={calculate} style={[styles.calcBtn, { backgroundColor: colors.primary }]}>
         <Ionicons name="calculator" size={20} color="#fff" />
-        <Text style={styles.calcBtnText}>احسب احتياجاتي</Text>
+        <Text style={styles.calcBtnText}>{t.dailyReq.calculate}</Text>
       </Pressable>
 
       {result && (
         <View style={styles.results}>
-          {/* BMR / TDEE */}
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.metaRow}>
               <View style={[styles.metaItem, { backgroundColor: "#3B82F620" }]}>
                 <Text style={[styles.metaValue, { color: "#3B82F6" }]}>{result.bmr}</Text>
-                <Text style={[styles.metaLabel, { color: colors.mutedForeground }]}>BMR (الراحة)</Text>
+                <Text style={[styles.metaLabel, { color: colors.mutedForeground }]}>{t.dailyReq.bmrLabel}</Text>
               </View>
               <View style={[styles.metaItem, { backgroundColor: colors.primary + "20" }]}>
                 <Text style={[styles.metaValue, { color: colors.primary }]}>{result.tdee}</Text>
-                <Text style={[styles.metaLabel, { color: colors.mutedForeground }]}>TDEE (النشاط)</Text>
+                <Text style={[styles.metaLabel, { color: colors.mutedForeground }]}>{t.dailyReq.tdeeLabel}</Text>
               </View>
               <View style={[styles.metaItem, { backgroundColor: "#F59E0B20" }]}>
                 <Text style={[styles.metaValue, { color: "#F59E0B" }]}>{result.calories}</Text>
-                <Text style={[styles.metaLabel, { color: colors.mutedForeground }]}>هدفك اليومي</Text>
+                <Text style={[styles.metaLabel, { color: colors.mutedForeground }]}>{t.dailyReq.dailyGoal}</Text>
               </View>
             </View>
           </View>
 
-          {/* Macros breakdown */}
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.sectionLabel, { color: colors.foreground }]}>توزيع الماكرو</Text>
-            <NutritionBar label="السعرات الحرارية" value={result.calories} unit="كالوري" dailyTarget={result.calories} color={colors.primary} />
-            <NutritionBar label="البروتين" value={result.protein} unit="غ" dailyTarget={result.protein} color="#3B82F6" />
-            <NutritionBar label="الكربوهيدرات" value={result.carbs} unit="غ" dailyTarget={result.carbs} color="#F59E0B" />
-            <NutritionBar label="الدهون" value={result.fat} unit="غ" dailyTarget={result.fat} color="#8B5CF6" />
-            <NutritionBar label="الألياف" value={result.fiber} unit="غ" dailyTarget={result.fiber} color="#10B981" />
+            <Text style={[styles.sectionLabel, { color: colors.foreground }]}>{t.dailyReq.macroDist}</Text>
+            <NutritionBar label={t.nutrients.calories} value={result.calories} unit={t.nutrients.kcal} dailyTarget={result.calories} color={colors.primary} />
+            <NutritionBar label={t.nutrients.protein} value={result.protein} unit={t.nutrients.g} dailyTarget={result.protein} color="#3B82F6" />
+            <NutritionBar label={t.nutrients.carbohydrates} value={result.carbs} unit={t.nutrients.g} dailyTarget={result.carbs} color="#F59E0B" />
+            <NutritionBar label={t.nutrients.fat} value={result.fat} unit={t.nutrients.g} dailyTarget={result.fat} color="#8B5CF6" />
+            <NutritionBar label={t.nutrients.fiber} value={result.fiber} unit={t.nutrients.g} dailyTarget={result.fiber} color="#10B981" />
           </View>
 
-          {/* Water */}
           <View style={[styles.waterCard, { backgroundColor: "#EFF6FF", borderColor: "#BFDBFE" }]}>
             <Ionicons name="water" size={32} color="#3B82F6" />
             <View>
-              <Text style={[styles.waterValue, { color: "#1D4ED8" }]}>{result.water} مل</Text>
-              <Text style={[styles.waterLabel, { color: "#3B82F6" }]}>= حوالي {Math.round(result.water / 250)} كوب ماء يومياً</Text>
+              <Text style={[styles.waterValue, { color: "#1D4ED8" }]}>{result.water} {t.dailyReq.waterVal}</Text>
+              <Text style={[styles.waterLabel, { color: "#3B82F6" }]}>{waterCups}</Text>
             </View>
           </View>
 
           <View style={[styles.noteCard, { backgroundColor: "#FEF3C7", borderColor: "#FCD34D" }]}>
             <Ionicons name="warning-outline" size={16} color="#D97706" />
-            <Text style={[styles.noteText, { color: "#92400E" }]}>
-              هذه أرقام تقديرية. النتائج الفعلية تختلف من شخص لآخر. استشر أخصائي تغذية للحصول على خطة دقيقة.
-            </Text>
+            <Text style={[styles.noteText, { color: "#92400E" }]}>{t.dailyReq.note}</Text>
           </View>
         </View>
       )}

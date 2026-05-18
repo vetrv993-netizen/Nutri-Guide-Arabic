@@ -5,15 +5,25 @@ import React from "react";
 import { FlatList, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApp } from "@/context/AppContext";
+import { useTheme } from "@/context/ThemeContext";
 import { FOOD_DATABASE } from "@/data/foodDatabase";
 import { useColors } from "@/hooks/useColors";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function FavoritesScreen() {
   const colors = useColors();
+  const t = useTranslation();
+  const { language } = useTheme();
   const insets = useSafeAreaInsets();
   const { favoriteFoods, toggleFavorite } = useApp();
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
   const foods = FOOD_DATABASE.filter(f => favoriteFoods.includes(f.id));
+
+  const getFoodName = (item: typeof FOOD_DATABASE[0]) =>
+    language === "en" ? item.english_name : item.arabic_name;
+
+  const getFoodCategory = (item: typeof FOOD_DATABASE[0]) =>
+    language === "en" ? item.category : item.category_arabic;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -21,7 +31,7 @@ export default function FavoritesScreen() {
         <Pressable onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: colors.muted }]}>
           <Ionicons name="chevron-forward" size={20} color={colors.foreground} />
         </Pressable>
-        <Text style={[styles.title, { color: colors.foreground }]}>الأطعمة المفضلة</Text>
+        <Text style={[styles.title, { color: colors.foreground }]}>{t.favorites.title}</Text>
       </View>
       <FlatList
         data={foods}
@@ -30,8 +40,8 @@ export default function FavoritesScreen() {
         ListEmptyComponent={
           <View style={styles.empty}>
             <Ionicons name="heart-outline" size={64} color={colors.mutedForeground} />
-            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>لا توجد مفضلات</Text>
-            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>اضغط على قلب أي طعام في صفحة البحث لإضافته</Text>
+            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>{t.favorites.empty}</Text>
+            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>{t.favorites.emptyText}</Text>
           </View>
         }
         renderItem={({ item }) => (
@@ -43,12 +53,14 @@ export default function FavoritesScreen() {
               <Ionicons name="heart" size={22} color={colors.destructive} />
             </Pressable>
             <View style={styles.foodInfo}>
-              <Text style={[styles.foodName, { color: colors.foreground }]}>{item.arabic_name}</Text>
-              <Text style={[styles.foodSub, { color: colors.mutedForeground }]}>{item.english_name} · {item.category_arabic}</Text>
+              <Text style={[styles.foodName, { color: colors.foreground }]}>{getFoodName(item)}</Text>
+              <Text style={[styles.foodSub, { color: colors.mutedForeground }]}>
+                {language === "en" ? item.arabic_name : item.english_name} · {getFoodCategory(item)}
+              </Text>
             </View>
             <View style={styles.calInfo}>
               <Text style={[styles.calValue, { color: colors.primary }]}>{item.calories}</Text>
-              <Text style={[styles.calUnit, { color: colors.mutedForeground }]}>كالوري/100غ</Text>
+              <Text style={[styles.calUnit, { color: colors.mutedForeground }]}>{t.favorites.kcalPer}</Text>
             </View>
           </Pressable>
         )}

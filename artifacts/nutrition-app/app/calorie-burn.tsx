@@ -13,49 +13,61 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { useTranslation } from "@/hooks/useTranslation";
 
-interface Exercise {
+interface ExerciseDef {
   id: string;
-  name: string;
   met: number;
   icon: keyof typeof Ionicons.glyphMap;
   color: string;
-  category: string;
+  catKey: string;
 }
 
-const EXERCISES: Exercise[] = [
-  { id: "walking", name: "المشي العادي", met: 3.5, icon: "walk-outline", color: "#10B981", category: "هوائي" },
-  { id: "walking_fast", name: "المشي السريع", met: 5, icon: "walk-outline", color: "#22C55E", category: "هوائي" },
-  { id: "running_slow", name: "الجري البطيء", met: 7, icon: "walk-outline", color: "#F59E0B", category: "هوائي" },
-  { id: "running", name: "الجري (8 كم/ساعة)", met: 11.5, icon: "walk-outline", color: "#EF4444", category: "هوائي" },
-  { id: "cycling", name: "ركوب الدراجة", met: 8, icon: "bicycle-outline", color: "#3B82F6", category: "هوائي" },
-  { id: "swimming", name: "السباحة", met: 8, icon: "water-outline", color: "#06B6D4", category: "هوائي" },
-  { id: "gym", name: "الجيم (وزن)", met: 5, icon: "barbell-outline", color: "#8B5CF6", category: "قوة" },
-  { id: "football", name: "كرة القدم", met: 10, icon: "football-outline", color: "#F97316", category: "رياضي" },
-  { id: "basketball", name: "كرة السلة", met: 8, icon: "basketball-outline", color: "#FB923C", category: "رياضي" },
-  { id: "yoga", name: "يوغا", met: 3, icon: "body-outline", color: "#A78BFA", category: "تمدد" },
-  { id: "jumping_rope", name: "حبل القفز", met: 12, icon: "pulse-outline", color: "#EC4899", category: "هوائي" },
-  { id: "stairs", name: "صعود الدرج", met: 8, icon: "arrow-up-outline", color: "#F59E0B", category: "يومي" },
-  { id: "household", name: "أعمال منزلية", met: 3.5, icon: "home-outline", color: "#6B7280", category: "يومي" },
-  { id: "shopping", name: "التسوق (مشي)", met: 2.5, icon: "bag-outline", color: "#84CC16", category: "يومي" },
-  { id: "dancing", name: "الرقص", met: 6.5, icon: "musical-notes-outline", color: "#F43F5E", category: "ترفيهي" },
+const EXERCISE_DEFS: ExerciseDef[] = [
+  { id: "walking", met: 3.5, icon: "walk-outline", color: "#10B981", catKey: "aerobic" },
+  { id: "walking_fast", met: 5, icon: "walk-outline", color: "#22C55E", catKey: "aerobic" },
+  { id: "running_slow", met: 7, icon: "walk-outline", color: "#F59E0B", catKey: "aerobic" },
+  { id: "running", met: 11.5, icon: "walk-outline", color: "#EF4444", catKey: "aerobic" },
+  { id: "cycling", met: 8, icon: "bicycle-outline", color: "#3B82F6", catKey: "aerobic" },
+  { id: "swimming", met: 8, icon: "water-outline", color: "#06B6D4", catKey: "aerobic" },
+  { id: "gym", met: 5, icon: "barbell-outline", color: "#8B5CF6", catKey: "strength" },
+  { id: "football", met: 10, icon: "football-outline", color: "#F97316", catKey: "sports" },
+  { id: "basketball", met: 8, icon: "basketball-outline", color: "#FB923C", catKey: "sports" },
+  { id: "yoga", met: 3, icon: "body-outline", color: "#A78BFA", catKey: "stretch" },
+  { id: "jumping_rope", met: 12, icon: "pulse-outline", color: "#EC4899", catKey: "aerobic" },
+  { id: "stairs", met: 8, icon: "arrow-up-outline", color: "#F59E0B", catKey: "daily" },
+  { id: "household", met: 3.5, icon: "home-outline", color: "#6B7280", catKey: "daily" },
+  { id: "shopping", met: 2.5, icon: "bag-outline", color: "#84CC16", catKey: "daily" },
+  { id: "dancing", met: 6.5, icon: "musical-notes-outline", color: "#F43F5E", catKey: "entertainment" },
 ];
 
 export default function CalorieBurnScreen() {
   const colors = useColors();
+  const t = useTranslation();
   const insets = useSafeAreaInsets();
   const [weight, setWeight] = useState("");
   const [duration, setDuration] = useState("30");
-  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
 
-  const calculateBurn = (exercise: Exercise) => {
-    const w = parseFloat(weight) || 70;
-    const d = parseFloat(duration) || 30;
-    return Math.round((exercise.met * w * (d / 60)));
+  const getExName = (id: string) => {
+    const key = id as keyof typeof t.caloriesBurn.exercises;
+    return t.caloriesBurn.exercises[key] ?? id;
   };
 
-  const categories = [...new Set(EXERCISES.map(e => e.category))];
+  const getCatName = (key: string) => {
+    const k = key as keyof typeof t.caloriesBurn.categories;
+    return t.caloriesBurn.categories[k] ?? key;
+  };
+
+  const calculateBurn = (met: number) => {
+    const w = parseFloat(weight) || 70;
+    const d = parseFloat(duration) || 30;
+    return Math.round(met * w * (d / 60));
+  };
+
+  const uniqueCats = [...new Set(EXERCISE_DEFS.map(e => e.catKey))];
+  const selectedEx = EXERCISE_DEFS.find(e => e.id === selectedId) ?? null;
 
   return (
     <ScrollView
@@ -67,15 +79,14 @@ export default function CalorieBurnScreen() {
         <Pressable onPress={() => router.back()} style={[styles.backBtn, { backgroundColor: colors.muted }]}>
           <Ionicons name="chevron-forward" size={20} color={colors.foreground} />
         </Pressable>
-        <Text style={[styles.title, { color: colors.foreground }]}>حرق السعرات</Text>
+        <Text style={[styles.title, { color: colors.foreground }]}>{t.caloriesBurn.title}</Text>
       </View>
 
-      {/* Inputs */}
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <Text style={[styles.sectionLabel, { color: colors.foreground }]}>بيانات الحساب</Text>
+        <Text style={[styles.sectionLabel, { color: colors.foreground }]}>{t.caloriesBurn.calcData}</Text>
         <View style={styles.inputRow}>
           <View style={styles.inputItem}>
-            <Text style={[styles.inputLabel, { color: colors.mutedForeground }]}>الوزن (كغ)</Text>
+            <Text style={[styles.inputLabel, { color: colors.mutedForeground }]}>{t.caloriesBurn.weightLabel}</Text>
             <TextInput
               style={[styles.inputField, { backgroundColor: colors.muted, color: colors.foreground, borderColor: colors.border }]}
               value={weight}
@@ -87,7 +98,7 @@ export default function CalorieBurnScreen() {
             />
           </View>
           <View style={styles.inputItem}>
-            <Text style={[styles.inputLabel, { color: colors.mutedForeground }]}>المدة (دقيقة)</Text>
+            <Text style={[styles.inputLabel, { color: colors.mutedForeground }]}>{t.caloriesBurn.durationLabel}</Text>
             <TextInput
               style={[styles.inputField, { backgroundColor: colors.muted, color: colors.foreground, borderColor: colors.border }]}
               value={duration}
@@ -101,25 +112,24 @@ export default function CalorieBurnScreen() {
         </View>
       </View>
 
-      {/* Exercise list grouped by category */}
-      {categories.map(cat => (
+      {uniqueCats.map(cat => (
         <View key={cat}>
-          <Text style={[styles.catTitle, { color: colors.foreground }]}>{cat}</Text>
+          <Text style={[styles.catTitle, { color: colors.foreground }]}>{getCatName(cat)}</Text>
           <View style={styles.exerciseGrid}>
-            {EXERCISES.filter(e => e.category === cat).map(ex => {
-              const burned = calculateBurn(ex);
-              const isSelected = selectedExercise?.id === ex.id;
+            {EXERCISE_DEFS.filter(e => e.catKey === cat).map(ex => {
+              const burned = calculateBurn(ex.met);
+              const isSelected = selectedId === ex.id;
               return (
                 <Pressable
                   key={ex.id}
-                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelectedExercise(isSelected ? null : ex); }}
+                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelectedId(isSelected ? null : ex.id); }}
                   style={[styles.exerciseCard, { backgroundColor: isSelected ? ex.color + "20" : colors.card, borderColor: isSelected ? ex.color : colors.border, borderWidth: isSelected ? 2 : 1 }]}
                 >
                   <Ionicons name={ex.icon} size={26} color={ex.color} />
-                  <Text style={[styles.exName, { color: colors.foreground }]}>{ex.name}</Text>
+                  <Text style={[styles.exName, { color: colors.foreground }]}>{getExName(ex.id)}</Text>
                   <View style={[styles.burnBadge, { backgroundColor: ex.color + "20" }]}>
                     <Ionicons name="flame" size={12} color={ex.color} />
-                    <Text style={[styles.burnText, { color: ex.color }]}>{burned} كالوري</Text>
+                    <Text style={[styles.burnText, { color: ex.color }]}>{burned} {t.caloriesBurn.kcalPerDuration}</Text>
                   </View>
                 </Pressable>
               );
@@ -128,36 +138,32 @@ export default function CalorieBurnScreen() {
         </View>
       ))}
 
-      {/* Selected exercise detail */}
-      {selectedExercise && (
-        <View style={[styles.detailCard, { backgroundColor: selectedExercise.color + "15", borderColor: selectedExercise.color }]}>
-          <Text style={[styles.detailTitle, { color: colors.foreground }]}>{selectedExercise.name}</Text>
+      {selectedEx && (
+        <View style={[styles.detailCard, { backgroundColor: selectedEx.color + "15", borderColor: selectedEx.color }]}>
+          <Text style={[styles.detailTitle, { color: colors.foreground }]}>{getExName(selectedEx.id)}</Text>
           <View style={styles.detailStats}>
             <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: selectedExercise.color }]}>{calculateBurn(selectedExercise)}</Text>
-              <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>كالوري/{duration}دقيقة</Text>
+              <Text style={[styles.statValue, { color: selectedEx.color }]}>{calculateBurn(selectedEx.met)}</Text>
+              <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{t.caloriesBurn.kcalPerDuration}/{duration}min</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: selectedExercise.color }]}>{Math.round((selectedExercise.met * (parseFloat(weight) || 70)) / 60)}</Text>
-              <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>كالوري/دقيقة</Text>
+              <Text style={[styles.statValue, { color: selectedEx.color }]}>{Math.round((selectedEx.met * (parseFloat(weight) || 70)) / 60)}</Text>
+              <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{t.caloriesBurn.kcalPerMin}</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: selectedExercise.color }]}>{selectedExercise.met * (parseFloat(weight) || 70)}</Text>
-              <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>كالوري/ساعة</Text>
+              <Text style={[styles.statValue, { color: selectedEx.color }]}>{Math.round(selectedEx.met * (parseFloat(weight) || 70))}</Text>
+              <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{t.caloriesBurn.kcalPerHour}</Text>
             </View>
           </View>
           <View style={[styles.metInfo, { backgroundColor: colors.card }]}>
-            <Text style={[styles.metText, { color: colors.mutedForeground }]}>معامل الطاقة الأيضية (MET): {selectedExercise.met}</Text>
+            <Text style={[styles.metText, { color: colors.mutedForeground }]}>{t.caloriesBurn.metInfo} {selectedEx.met}</Text>
           </View>
         </View>
       )}
 
       <View style={[styles.formulaCard, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
-        <Text style={[styles.formulaTitle, { color: colors.foreground }]}>كيف يتم الحساب؟</Text>
-        <Text style={[styles.formulaText, { color: colors.mutedForeground }]}>
-          السعرات المحروقة = MET × الوزن (كغ) × المدة (ساعة){"\n\n"}
-          MET هو مقياس للطاقة المستهلكة خلال النشاط مقارنة بالراحة. الجري له MET أعلى من المشي.
-        </Text>
+        <Text style={[styles.formulaTitle, { color: colors.foreground }]}>{t.caloriesBurn.howCalc}</Text>
+        <Text style={[styles.formulaText, { color: colors.mutedForeground }]}>{t.caloriesBurn.formula}</Text>
       </View>
     </ScrollView>
   );
@@ -190,5 +196,5 @@ const styles = StyleSheet.create({
   metText: { fontSize: 12, fontFamily: "Inter_400Regular" },
   formulaCard: { margin: 16, padding: 16, borderRadius: 16, borderWidth: 1, gap: 8 },
   formulaTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold", textAlign: "right" },
-  formulaText: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "right", lineHeight: 22, color: "#6B7280" },
+  formulaText: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "right", lineHeight: 22 },
 });

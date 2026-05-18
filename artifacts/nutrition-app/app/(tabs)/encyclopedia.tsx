@@ -12,9 +12,11 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-na
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ENCYCLOPEDIA_DATA, NutrientInfo } from "@/data/encyclopediaData";
 import { useColors } from "@/hooks/useColors";
+import { useTranslation } from "@/hooks/useTranslation";
 
 function EncyclopediaCard({ item }: { item: NutrientInfo }) {
   const colors = useColors();
+  const t = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const height = useSharedValue(0);
   const opacity = useSharedValue(0);
@@ -48,10 +50,10 @@ function EncyclopediaCard({ item }: { item: NutrientInfo }) {
       <Animated.View style={animStyle}>
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
         <View style={styles.expandedContent}>
-          <Text style={[styles.sectionLabel, { color: colors.primary }]}>ما هو؟</Text>
+          <Text style={[styles.sectionLabel, { color: colors.primary }]}>{t.encyclopedia.whatIsIt}</Text>
           <Text style={[styles.bodyText, { color: colors.foreground }]}>{item.importance}</Text>
 
-          <Text style={[styles.sectionLabel, { color: "#10B981", marginTop: 12 }]}>الفوائد</Text>
+          <Text style={[styles.sectionLabel, { color: "#10B981", marginTop: 12 }]}>{t.encyclopedia.benefits}</Text>
           {item.benefits.map((b, i) => (
             <View key={i} style={styles.listRow}>
               <Ionicons name="checkmark-circle" size={14} color="#10B981" />
@@ -59,7 +61,7 @@ function EncyclopediaCard({ item }: { item: NutrientInfo }) {
             </View>
           ))}
 
-          <Text style={[styles.sectionLabel, { color: "#F59E0B", marginTop: 12 }]}>مخاطر النقص</Text>
+          <Text style={[styles.sectionLabel, { color: "#F59E0B", marginTop: 12 }]}>{t.encyclopedia.deficiencyRisks}</Text>
           {item.deficiencyRisks.map((r, i) => (
             <View key={i} style={styles.listRow}>
               <Ionicons name="warning-outline" size={14} color="#F59E0B" />
@@ -67,7 +69,7 @@ function EncyclopediaCard({ item }: { item: NutrientInfo }) {
             </View>
           ))}
 
-          <Text style={[styles.sectionLabel, { color: "#EF4444", marginTop: 12 }]}>مخاطر الإفراط</Text>
+          <Text style={[styles.sectionLabel, { color: "#EF4444", marginTop: 12 }]}>{t.encyclopedia.excessRisks}</Text>
           {item.excessRisks.map((r, i) => (
             <View key={i} style={styles.listRow}>
               <Ionicons name="alert-circle-outline" size={14} color="#EF4444" />
@@ -75,7 +77,7 @@ function EncyclopediaCard({ item }: { item: NutrientInfo }) {
             </View>
           ))}
 
-          <Text style={[styles.sectionLabel, { color: "#60A5FA", marginTop: 12 }]}>المصادر الغذائية</Text>
+          <Text style={[styles.sectionLabel, { color: "#60A5FA", marginTop: 12 }]}>{t.encyclopedia.foodSources}</Text>
           <View style={styles.foodSourcesRow}>
             {item.foodSources.map((f, i) => (
               <View key={i} style={[styles.sourceChip, { backgroundColor: colors.secondary }]}>
@@ -86,7 +88,7 @@ function EncyclopediaCard({ item }: { item: NutrientInfo }) {
 
           <View style={[styles.dailyBox, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
             <Ionicons name="calendar-outline" size={16} color={colors.primary} />
-            <Text style={[styles.dailyTitle, { color: colors.foreground }]}>الاحتياج اليومي:</Text>
+            <Text style={[styles.dailyTitle, { color: colors.foreground }]}>{t.encyclopedia.dailyIntake}</Text>
             <Text style={[styles.dailyValue, { color: colors.primary }]}>{item.dailyIntake}</Text>
           </View>
 
@@ -103,6 +105,7 @@ function EncyclopediaCard({ item }: { item: NutrientInfo }) {
 
 export default function EncyclopediaScreen() {
   const colors = useColors();
+  const t = useTranslation();
   const insets = useSafeAreaInsets();
   const topPadding = Platform.OS === "web" ? 67 : insets.top;
 
@@ -115,16 +118,14 @@ export default function EncyclopediaScreen() {
       <View style={styles.header}>
         <Ionicons name="book" size={28} color={colors.primary} />
         <View>
-          <Text style={[styles.title, { color: colors.foreground }]}>الموسوعة الغذائية</Text>
-          <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>دليلك الشامل للعناصر الغذائية</Text>
+          <Text style={[styles.title, { color: colors.foreground }]}>{t.encyclopedia.title}</Text>
+          <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>{t.encyclopedia.subtitle}</Text>
         </View>
       </View>
 
       <View style={[styles.infoCard, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
         <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
-        <Text style={[styles.infoText, { color: colors.foreground }]}>
-          اضغط على أي بطاقة لعرض التفاصيل الكاملة عن العنصر الغذائي
-        </Text>
+        <Text style={[styles.infoText, { color: colors.foreground }]}>{t.encyclopedia.tapCard}</Text>
       </View>
 
       <View style={styles.list}>

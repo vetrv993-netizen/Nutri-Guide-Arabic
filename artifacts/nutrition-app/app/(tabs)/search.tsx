@@ -13,11 +13,15 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApp } from "@/context/AppContext";
+import { useTheme } from "@/context/ThemeContext";
 import { CATEGORIES, FoodItem, FOOD_DATABASE, searchFoods } from "@/data/foodDatabase";
 import { useColors } from "@/hooks/useColors";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function SearchScreen() {
   const colors = useColors();
+  const t = useTranslation();
+  const { language } = useTheme();
   const insets = useSafeAreaInsets();
   const { isFavorite, toggleFavorite } = useApp();
   const [query, setQuery] = useState("");
@@ -33,15 +37,26 @@ export default function SearchScreen() {
     await toggleFavorite(food.id);
   };
 
+  const getCategoryLabel = (key: string) => {
+    const catKey = key as keyof typeof t.categories;
+    return t.categories[catKey] ?? key;
+  };
+
+  const getFoodName = (item: FoodItem) =>
+    language === "en" ? item.english_name : item.arabic_name;
+
+  const getFoodCategory = (item: FoodItem) =>
+    language === "en" ? item.category : item.category_arabic;
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPadding + 12 }]}>
-        <Text style={[styles.title, { color: colors.foreground }]}>قاعدة بيانات الأطعمة</Text>
+        <Text style={[styles.title, { color: colors.foreground }]}>{t.search.title}</Text>
         <View style={[styles.searchBox, { backgroundColor: colors.muted, borderColor: colors.border }]}>
           <Ionicons name="search" size={18} color={colors.mutedForeground} />
           <TextInput
             style={[styles.searchInput, { color: colors.foreground }]}
-            placeholder="ابحث عن طعام..."
+            placeholder={t.search.placeholder}
             placeholderTextColor={colors.mutedForeground}
             value={query}
             onChangeText={setQuery}
@@ -65,14 +80,14 @@ export default function SearchScreen() {
               style={[styles.catChip, { backgroundColor: selectedCategory === item.key ? colors.primary : colors.muted, borderColor: selectedCategory === item.key ? colors.primary : colors.border }]}
             >
               <Text style={[styles.catText, { color: selectedCategory === item.key ? colors.primaryForeground : colors.foreground }]}>
-                {item.arabic}
+                {getCategoryLabel(item.key)}
               </Text>
             </Pressable>
           )}
         />
       </View>
 
-      <Text style={[styles.count, { color: colors.mutedForeground }]}>{results.length} طعام</Text>
+      <Text style={[styles.count, { color: colors.mutedForeground }]}>{results.length} {t.search.foods}</Text>
 
       <FlatList
         data={results}
@@ -84,12 +99,14 @@ export default function SearchScreen() {
             style={[styles.foodRow, { borderBottomColor: colors.border }]}
           >
             <View style={styles.foodLeft}>
-              <Text style={[styles.foodName, { color: colors.foreground }]}>{item.arabic_name}</Text>
-              <Text style={[styles.foodSubtitle, { color: colors.mutedForeground }]}>{item.english_name} · {item.category_arabic}</Text>
+              <Text style={[styles.foodName, { color: colors.foreground }]}>{getFoodName(item)}</Text>
+              <Text style={[styles.foodSubtitle, { color: colors.mutedForeground }]}>
+                {language === "en" ? item.arabic_name : item.english_name} · {getFoodCategory(item)}
+              </Text>
               <View style={styles.macroRow}>
-                <MacroBadge label="ك" value={item.carbohydrates} color={colors.warning} unit="غ" />
-                <MacroBadge label="ب" value={item.protein} color="#3B82F6" unit="غ" />
-                <MacroBadge label="د" value={item.fat} color="#8B5CF6" unit="غ" />
+                <MacroBadge label={t.search.c} value={item.carbohydrates} color={colors.warning} unit={t.search.g} />
+                <MacroBadge label={t.search.p} value={item.protein} color="#3B82F6" unit={t.search.g} />
+                <MacroBadge label={t.search.f} value={item.fat} color="#8B5CF6" unit={t.search.g} />
               </View>
             </View>
             <View style={styles.foodRight}>
@@ -101,15 +118,15 @@ export default function SearchScreen() {
                 />
               </Pressable>
               <Text style={[styles.calValue, { color: colors.primary }]}>{item.calories}</Text>
-              <Text style={[styles.calUnit, { color: colors.mutedForeground }]}>كالوري</Text>
-              <Text style={[styles.calPer, { color: colors.mutedForeground }]}>لكل 100غ</Text>
+              <Text style={[styles.calUnit, { color: colors.mutedForeground }]}>{t.search.kcal}</Text>
+              <Text style={[styles.calPer, { color: colors.mutedForeground }]}>{t.search.perHundredG}</Text>
             </View>
           </Pressable>
         )}
         ListEmptyComponent={
           <View style={styles.empty}>
             <Feather name="search" size={48} color={colors.mutedForeground} />
-            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>لا توجد نتائج</Text>
+            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>{t.search.noResults}</Text>
           </View>
         }
       />
