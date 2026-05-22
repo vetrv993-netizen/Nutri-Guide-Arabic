@@ -9,11 +9,17 @@
     },
     "preview": {
       "distribution": "internal",
+      "env": {
+        "NPM_CONFIG_FROZEN_LOCKFILE": "false"
+      },
       "android": {
         "buildType": "apk"
       }
     },
     "production": {
+      "env": {
+        "NPM_CONFIG_FROZEN_LOCKFILE": "false"
+      },
       "android": {
         "buildType": "app-bundle"
       }
